@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<title>AKASH MODZ — HACKER ENGINE</title>
+<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --g:#00ff41;--g2:#39ff14;--g3:#00cc33;--g4:#008f11;
+  --bg:#000000;--bg2:#050f05;--bg3:#0a180a;--bg4:#0f220f;
+  --border:rgba(0,255,65,.18);--text:#ccffcc;--sub:#4d9955;
+  --red:#ff0033;--yellow:#aaff00;--orange:#88ff00;
+  --glow:rgba(0,255,65,.3);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100dvh;background:var(--bg);color:var(--text);overflow:hidden;font-family:'Fira Code','Share Tech Mono',monospace;-webkit-tap-highlight-color:transparent}
+.page{display:none;width:100%;height:100dvh;overflow-y:auto;overflow-x:hidden;flex-direction:column;-webkit-overflow-scrolling:touch}
+.page.active{display:flex}
+::-webkit-scrollbar{width:2px}
+::-webkit-scrollbar-thumb{background:rgba(0,255,65,.2)}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+@keyframes scan{0%{top:-4px}100%{top:calc(100%+4px)}}
+@keyframes ticker{0%{transform:translateX(100%)}100%{transform:translateX(-100%)}}
+@keyframes glow-pulse{0%,100%{box-shadow:0 0 10px var(--glow)}50%{box-shadow:0 0 30px var(--glow),0 0 60px rgba(0,255,65,.15)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes matrix-fall{0%{transform:translateY(-100%);opacity:1}100%{transform:translateY(100vh);opacity:0}}
+@keyframes flicker{0%,95%,100%{opacity:1}96%,98%{opacity:.4}}
+@keyframes type-cursor{0%,100%{border-right-color:var(--g)}50%{border-right-color:transparent}}
+@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-5px)}40%,80%{transform:translateX(5px)}}
+@keyframes pop{from{transform:scale(.85);opacity:0}to{transform:scale(1);opacity:1}}
+
+/* MATRIX CANVAS */
+#matrixCanvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;opacity:.12;pointer-events:none}
+
+/* SCANLINE */
+.scanline{position:fixed;left:0;width:100%;height:2px;background:linear-gradient(90deg,transparent,rgba(0,255,65,.4),transparent);z-index:2;animation:scan 6s linear infinite;pointer-events:none}
+
+/* CRT overlay */
+body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,255,65,.015) 2px,rgba(0,255,65,.015) 4px);pointer-events:none;z-index:9990}
+
+/* ══ LANDING ══ */
+#pg-landing{background:var(--bg);position:relative;overflow:hidden;justify-content:space-between}
+
+.land-content{position:relative;z-index:3;display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;padding:24px 20px;gap:22px}
+
+.logo-wrap{text-align:center;animation:fadeUp .8s ease both}
+.logo-top{font-size:9px;letter-spacing:4px;color:var(--sub);margin-bottom:10px}
+.logo-top span{color:var(--g);animation:blink 1s infinite}
+.logo-main{font-size:clamp(28px,10vw,50px);font-weight:700;letter-spacing:4px;color:var(--g);text-shadow:0 0 10px var(--g),0 0 30px rgba(0,255,65,.4),0 0 60px rgba(0,255,65,.15);line-height:1;margin-bottom:6px;animation:flicker 5s infinite}
+.logo-sub{font-size:10px;letter-spacing:3px;color:var(--sub)}
+.logo-ver{font-size:9px;letter-spacing:2px;color:rgba(0,255,65,.3);margin-top:4px}
+
+.ticker-wrap{width:100%;overflow:hidden;border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:8px 0;background:rgba(0,255,65,.02);z-index:3;animation:fadeIn .8s .1s ease both}
+.ticker-inner{white-space:nowrap;animation:ticker 20s linear infinite;font-size:10px;letter-spacing:2px;color:rgba(0,255,65,.6)}
+
+.land-form{width:100%;max-width:380px;display:flex;flex-direction:column;gap:12px;animation:fadeUp .8s .2s ease both;position:relative;z-index:3}
+.inp-label{font-size:9px;letter-spacing:3px;color:var(--sub);margin-bottom:5px;display:block}
+.inp-wrap{position:relative}
+.inp{width:100%;padding:14px 50px 14px 16px;border-radius:4px;border:1px solid var(--border);background:rgba(0,20,0,.85);color:var(--g);font-family:'Fira Code',monospace;font-size:14px;font-weight:500;letter-spacing:2px;outline:none;transition:border-color .2s,box-shadow .2s;-webkit-appearance:none;caret-color:var(--g)}
+.inp:focus{border-color:var(--g);box-shadow:0 0 0 2px rgba(0,255,65,.1),0 0 20px rgba(0,255,65,.08)}
+.inp::placeholder{color:rgba(0,255,65,.2);letter-spacing:2px}
+.inp.shake{animation:shake .4s ease}
+.eye-btn{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:transparent;border:none;color:var(--sub);cursor:pointer;font-size:14px;font-family:monospace}
+
+.btn-login{width:100%;padding:15px;border:1px solid var(--g);border-radius:4px;background:rgba(0,255,65,.06);color:var(--g);font-family:'Fira Code',monospace;font-size:12px;font-weight:700;letter-spacing:4px;cursor:pointer;transition:all .2s;text-shadow:0 0 8px var(--g);position:relative;overflow:hidden}
+.btn-login::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(0,255,65,.08),transparent);transform:translateX(-100%);transition:transform .4s}
+.btn-login:active::before{transform:translateX(100%)}
+.btn-login:active{background:rgba(0,255,65,.12);box-shadow:0 0 20px rgba(0,255,65,.3)}
+
+.login-status{min-height:18px;text-align:center;font-size:11px;letter-spacing:2px;font-weight:600}
+.login-status.ok{color:var(--g)}
+.login-status.err{color:var(--red)}
+
+.land-tg{text-align:center;font-size:10px;color:var(--sub);letter-spacing:2px;text-decoration:none;padding:6px}
+.land-tg:active{color:var(--g)}
+.land-footer{position:relative;z-index:3;padding:12px;text-align:center;font-size:8px;color:rgba(0,255,65,.2);letter-spacing:2px}
+
+/* ══ APP ══ */
+#pg-app{flex-direction:column}
+.app-nav{display:flex;border-bottom:1px solid var(--border);background:rgba(0,0,0,.97);backdrop-filter:blur(10px);position:sticky;top:0;z-index:100;padding:0 4px}
+.nav-btn{flex:1;padding:11px 2px 9px;border:none;background:transparent;color:var(--sub);font-family:'Fira Code',monospace;font-size:8px;font-weight:600;letter-spacing:1px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;transition:color .2s;border-bottom:2px solid transparent;margin-bottom:-1px;position:relative}
+.nav-btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.nav-btn.active{color:var(--g);border-bottom-color:var(--g);text-shadow:0 0 6px var(--g)}
+.nav-badge{position:absolute;top:8px;right:calc(50% - 12px);width:5px;height:5px;border-radius:50%;background:var(--red);display:none}
+.nav-badge.show{display:block}
+
+.tab-content{display:none;padding:12px;animation:fadeIn .2s ease}
+.tab-content.active{display:block}
+
+/* TERMINAL CARD */
+.t-card{background:var(--bg2);border:1px solid var(--border);border-radius:4px;padding:14px;margin-bottom:10px;position:relative}
+.t-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(0,255,65,.25),transparent)}
+.t-label{font-size:8px;letter-spacing:3px;color:var(--sub);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.t-label::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(0,255,65,.12),transparent)}
+
+/* EXPIRY */
+.expiry-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;font-size:10px}
+.expiry-lbl{color:var(--sub);letter-spacing:1px}
+.expiry-time{color:var(--g);font-weight:700;font-size:13px;text-shadow:0 0 8px var(--g)}
+.expiry-bar{height:2px;background:rgba(0,255,65,.08);border-radius:1px;overflow:hidden}
+.expiry-fill{height:100%;border-radius:1px;transition:width 1s linear}
+
+/* STATS */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+.stat-box{background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:10px 4px;text-align:center}
+.stat-val{font-size:20px;font-weight:700;color:var(--g);text-shadow:0 0 8px var(--g)}
+.stat-val.g{color:var(--g2);text-shadow:0 0 8px var(--g2)}
+.stat-val.r{color:var(--red);text-shadow:0 0 8px var(--red)}
+.stat-lbl{font-size:7px;letter-spacing:1px;color:var(--sub);margin-top:3px}
+
+/* LAST 10 */
+.last10-row{display:flex;gap:4px;align-items:center;flex-wrap:wrap}
+.l10{width:11px;height:11px;border-radius:2px}
+.l10.w{background:var(--g);box-shadow:0 0 4px var(--g)}
+.l10.l{background:var(--red);box-shadow:0 0 4px var(--red)}
+.l10.j{background:var(--yellow);box-shadow:0 0 4px var(--yellow)}
+
+/* MINI BAR */
+.mini-bars{display:flex;gap:3px;align-items:flex-end;height:24px;margin-top:8px}
+.mini-bar{flex:1;border-radius:1px;transition:height .4s ease,background .3s}
+
+/* BIG/SMALL */
+.bs-row{display:flex;gap:6px;height:32px;margin-bottom:6px}
+.bs-b{border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;letter-spacing:1px;transition:flex .6s ease;border:1px solid rgba(0,255,65,.2);color:var(--g);background:rgba(0,255,65,.06)}
+.bs-s{border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;letter-spacing:1px;transition:flex .6s ease;border:1px solid rgba(255,0,51,.2);color:var(--red);background:rgba(255,0,51,.05)}
+.bs-lbl-row{display:flex;justify-content:space-between;font-size:9px;color:var(--sub);letter-spacing:1px}
+
+/* TIMER */
+.pred-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;gap:6px}
+.period-lbl{font-size:8px;letter-spacing:2px;color:var(--sub);margin-bottom:3px}
+.timer-big{font-size:38px;font-weight:700;color:var(--g);line-height:1;text-shadow:0 0 15px var(--g),0 0 30px rgba(0,255,65,.3);transition:color .3s,text-shadow .3s}
+.strat-pill{padding:4px 12px;border-radius:2px;font-size:8px;letter-spacing:2px;font-weight:600;border:1px solid rgba(0,255,65,.25);background:rgba(0,255,65,.04);color:var(--g)}
+.live-row{display:flex;align-items:center;gap:5px;font-size:8px;letter-spacing:1px;color:var(--sub)}
+.live-el{width:5px;height:5px;border-radius:50%;background:var(--g);animation:blink 1.5s infinite}
+.live-el.off{background:var(--red)}
+
+.prog-wrap{height:2px;background:rgba(0,255,65,.06);border-radius:1px;overflow:hidden;margin-bottom:12px}
+.prog-fill{height:100%;border-radius:1px;transition:width 1s linear,background .3s}
+
+/* PREDICTION BOX */
+.pred-box{background:rgba(0,255,65,.03);border:1px solid rgba(0,255,65,.2);border-radius:4px;padding:24px 16px;text-align:center;margin-bottom:10px;position:relative;overflow:hidden;animation:glow-pulse 3s ease-in-out infinite}
+.pred-box::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(0,255,65,.4),transparent)}
+.pred-box-lbl{font-size:8px;letter-spacing:4px;color:var(--sub);margin-bottom:10px}
+.pred-val{font-size:60px;font-weight:700;color:var(--g);text-shadow:0 0 15px var(--g),0 0 40px rgba(0,255,65,.3);line-height:1;letter-spacing:4px;transition:all .3s;animation:pop .3s ease}
+.pred-nums-row{display:flex;justify-content:center;gap:10px;margin-top:14px}
+.num-chip{width:48px;height:48px;border-radius:4px;border:1px solid var(--g);background:rgba(0,255,65,.06);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:var(--g);text-shadow:0 0 8px var(--g);box-shadow:0 0 10px rgba(0,255,65,.15),inset 0 0 10px rgba(0,255,65,.03)}
+
+/* CONFIDENCE */
+.conf-wrap{margin-top:12px;padding-top:12px;border-top:1px solid rgba(0,255,65,.08)}
+.conf-top{display:flex;justify-content:space-between;margin-bottom:5px;font-size:9px}
+.conf-lbl{color:var(--sub);letter-spacing:1px}
+.conf-pct-val{color:var(--g);font-weight:700}
+.conf-bg{height:5px;background:rgba(0,255,65,.06);border-radius:1px;overflow:hidden}
+.conf-fill{height:100%;border-radius:1px;transition:width .6s ease,background .4s}
+
+/* STRAT CARDS */
+.strat-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.strat-c{background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:12px;text-align:center}
+.strat-icon{font-size:20px;margin-bottom:4px}
+.strat-name{font-size:7px;letter-spacing:2px;color:var(--sub);margin-bottom:4px}
+.strat-val{font-size:16px;font-weight:700;color:var(--g);text-shadow:0 0 6px var(--g)}
+
+/* MARTINGALE */
+.mart-row{display:flex;gap:5px;margin-top:8px}
+.mart-lv{flex:1;padding:8px 3px;border-radius:3px;border:1px solid var(--border);text-align:center;font-size:7px;letter-spacing:1px;color:var(--sub);background:var(--bg3);transition:all .2s}
+.mart-lv.a{border-color:var(--g);color:var(--g);background:rgba(0,255,65,.06);box-shadow:0 0 8px rgba(0,255,65,.12);text-shadow:0 0 6px var(--g)}
+.mart-lv.l2.a{border-color:var(--yellow);color:var(--yellow);background:rgba(170,255,0,.05)}
+.mart-lv.l3.a{border-color:var(--orange);color:var(--orange);background:rgba(136,255,0,.05)}
+.mart-lv.l4.a{border-color:var(--red);color:var(--red);background:rgba(255,0,51,.05)}
+.mart-val{font-size:15px;font-weight:700;display:block;margin-bottom:2px}
+.btn-rst{width:100%;margin-top:8px;padding:10px;border-radius:3px;border:1px solid rgba(0,255,65,.2);background:rgba(0,255,65,.03);color:var(--g);font-family:'Fira Code',monospace;font-size:10px;font-weight:600;letter-spacing:2px;cursor:pointer;transition:all .2s}
+.btn-rst:active{background:rgba(0,255,65,.08)}
+
+/* HISTORY */
+.hist-filter{display:flex;gap:5px;margin-bottom:10px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.hist-filter::-webkit-scrollbar{display:none}
+.hf-btn{padding:5px 14px;border-radius:2px;border:1px solid var(--border);background:transparent;color:var(--sub);font-family:'Fira Code',monospace;font-size:9px;font-weight:600;letter-spacing:1px;cursor:pointer;transition:all .2s;white-space:nowrap;flex-shrink:0}
+.hf-btn.active{border-color:var(--g);color:var(--g);background:rgba(0,255,65,.04)}
+.hist-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:4px;overflow:hidden;margin-bottom:10px}
+.hist-table{width:100%;border-collapse:collapse;font-size:11px}
+.hist-table th{padding:9px 8px;color:var(--sub);font-size:7px;letter-spacing:2px;border-bottom:1px solid var(--border);text-align:left;font-weight:600;background:rgba(0,255,65,.02)}
+.hist-table td{padding:10px 8px;border-bottom:1px solid rgba(0,255,65,.05);color:rgba(204,255,204,.8);font-weight:500}
+.hist-table tr:last-child td{border-bottom:none}
+.hist-table tr.nr td{background:rgba(0,255,65,.02)}
+.badge{padding:2px 9px;border-radius:2px;font-size:8px;font-weight:700;letter-spacing:1px}
+.badge.win{background:rgba(0,255,65,.08);color:var(--g);border:1px solid rgba(0,255,65,.2)}
+.badge.loss{background:rgba(255,0,51,.07);color:var(--red);border:1px solid rgba(255,0,51,.2)}
+.badge.jp{background:rgba(170,255,0,.08);color:var(--yellow);border:1px solid rgba(170,255,0,.2)}
+.hist-btns{display:flex;gap:6px}
+.btn-act{flex:1;padding:11px;border-radius:3px;font-family:'Fira Code',monospace;font-size:10px;font-weight:600;letter-spacing:2px;cursor:pointer;transition:all .2s}
+.btn-dl{border:1px solid var(--border);background:var(--bg2);color:var(--text)}
+.btn-clr{border:1px solid rgba(255,0,51,.2);background:rgba(255,0,51,.04);color:var(--red)}
+.btn-act:active{transform:scale(.97)}
+
+/* GAMES */
+.games-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.game-card{background:var(--bg2);border:1px solid var(--border);border-radius:4px;padding:16px 10px;text-align:center;text-decoration:none;display:flex;flex-direction:column;align-items:center;gap:7px;transition:all .2s;position:relative;overflow:hidden}
+.game-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(0,255,65,.2),transparent)}
+.game-card:active{background:rgba(0,255,65,.04);transform:scale(.96)}
+.game-icon-wrap{width:50px;height:50px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:26px;border:1px solid rgba(0,255,65,.15)}
+.game-name{font-size:10px;font-weight:700;letter-spacing:3px;color:var(--g);text-shadow:0 0 6px var(--g)}
+.game-url{font-size:8px;color:var(--sub);letter-spacing:1px}
+.game-cta{font-size:8px;letter-spacing:2px;color:var(--g);font-weight:700;padding:4px 12px;border-radius:2px;border:1px solid rgba(0,255,65,.2);background:rgba(0,255,65,.04)}
+
+/* SUPPORT */
+.supp-hero{background:rgba(0,255,65,.03);border:1px solid rgba(0,255,65,.15);border-radius:4px;padding:24px 18px;text-align:center;margin-bottom:10px;position:relative;overflow:hidden}
+.supp-hero::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(0,255,65,.3),transparent)}
+.supp-icon{font-size:44px;margin-bottom:12px}
+.supp-title{font-size:16px;font-weight:700;letter-spacing:3px;color:var(--g);text-shadow:0 0 10px var(--g);margin-bottom:8px}
+.supp-desc{font-size:12px;color:var(--sub);line-height:1.7;margin-bottom:18px;letter-spacing:.5px}
+.btn-tg{display:inline-flex;align-items:center;gap:8px;padding:12px 26px;border-radius:3px;background:rgba(0,255,65,.08);border:1px solid rgba(0,255,65,.3);color:var(--g);font-family:'Fira Code',monospace;font-size:11px;font-weight:700;letter-spacing:2px;text-decoration:none;text-shadow:0 0 6px var(--g);transition:all .2s}
+.btn-tg:active{background:rgba(0,255,65,.15)}
+.sess-card{background:var(--bg2);border:1px solid var(--border);border-radius:4px;padding:14px;margin-bottom:10px}
+.sess-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(0,255,65,.05);font-size:11px}
+.sess-row:last-of-type{border-bottom:none}
+.sess-k{color:var(--sub);letter-spacing:1px}
+.sess-v{color:var(--g);font-weight:700;letter-spacing:1px;font-size:10px}
+.sess-v.r{color:var(--red)}
+.btn-logout{width:100%;margin-top:10px;padding:12px;border-radius:3px;border:1px solid rgba(255,0,51,.2);background:rgba(255,0,51,.04);color:var(--red);font-family:'Fira Code',monospace;font-size:11px;font-weight:700;letter-spacing:3px;cursor:pointer;transition:all .2s}
+.btn-logout:active{background:rgba(255,0,51,.1)}
+
+/* TOAST */
+#toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(14px);padding:10px 20px;border-radius:3px;font-size:11px;font-weight:700;letter-spacing:2px;z-index:9999;opacity:0;transition:all .3s;white-space:nowrap;pointer-events:none}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#toast.win{background:rgba(0,255,65,.08);border:1px solid rgba(0,255,65,.25);color:var(--g)}
+#toast.loss{background:rgba(255,0,51,.08);border:1px solid rgba(255,0,51,.25);color:var(--red)}
+#toast.info{background:rgba(0,255,65,.06);border:1px solid rgba(0,255,65,.15);color:var(--sub)}
+#toast.jackpot{background:rgba(170,255,0,.08);border:1px solid rgba(170,255,0,.25);color:var(--yellow)}
+</style>
+</head>
+<body>
+<canvas id="matrixCanvas"></canvas>
+<div class="scanline"></div>
+<div id="toast"></div>
+
+<!-- ══ LANDING ══ -->
+<div id="pg-landing" class="page active">
+  <div class="land-content">
+    <div class="logo-wrap">
+      <div class="logo-top"><span>[</span> SYSTEM ONLINE <span>]</span></div>
+      <div class="logo-main">AKASH MODZ</div>
+      <div class="logo-sub">HACKER PREDICTION ENGINE</div>
+      <div class="logo-ver">v3.0 // @AKASH_VHAI444</div>
+    </div>
+
+    <div class="ticker-wrap">
+      <div class="ticker-inner">⚡ AKASH MODZ &nbsp;&nbsp;&nbsp; >> AI ENGINE ONLINE &nbsp;&nbsp;&nbsp; 🎯 SIGNAL PRECISION 70%+ &nbsp;&nbsp;&nbsp; >> DKWIN • HGNICE • BDWIN24 • AMARCLUB &nbsp;&nbsp;&nbsp; 📲 @AKASH_VHAI444 &nbsp;&nbsp;&nbsp;</div>
+    </div>
+
+    <div class="land-form">
+      <div>
+        <label class="inp-label">> ENTER ACCESS UID</label>
+        <div class="inp-wrap">
+          <input id="keyInput" class="inp" type="password" placeholder="UID-00000" autocomplete="off"/>
+          <button class="eye-btn" onclick="toggleEye()">◉</button>
+        </div>
+      </div>
+      <button class="btn-login" onclick="doLogin()">[ AUTHENTICATE ]</button>
+      <div id="loginStatus" class="login-status"></div>
+      <a href="https://t.me/AKASH_VHAI444" target="_blank" class="land-tg">>> BUY KEY — @AKASH_VHAI444</a>
+    </div>
+  </div>
+  <div class="land-footer">// AKASH MODZ © 2025 // UNAUTHORIZED ACCESS PROHIBITED //</div>
+</div>
+
+<!-- ══ APP ══ -->
+<div id="pg-app" class="page">
+  <nav class="app-nav">
+    <button class="nav-btn active" onclick="switchTab('signal',this)">
+      <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>SIGNAL
+    </button>
+    <button class="nav-btn" onclick="switchTab('history',this)">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>HISTORY
+      <span class="nav-badge" id="histBadge"></span>
+    </button>
+    <button class="nav-btn" onclick="switchTab('games',this)">
+      <svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="15" rx="2"/><polyline points="16 2 12 6 8 2"/></svg>GAMES
+    </button>
+    <button class="nav-btn" onclick="switchTab('support',this)">
+      <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>SUPPORT
+    </button>
+  </nav>
+
+  <!-- SIGNAL -->
+  <div id="tab-signal" class="tab-content active">
+
+    <div class="t-card">
+      <div class="expiry-row">
+        <span class="expiry-lbl">> SESSION</span>
+        <span class="expiry-time" id="expTime">UNLIMITED</span>
+      </div>
+      <div class="expiry-bar"><div class="expiry-fill" id="expFill" style="width:100%;background:linear-gradient(90deg,#004d00,var(--g))"></div></div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-box"><div class="stat-val" id="sRate">0%</div><div class="stat-lbl">WIN RATE</div></div>
+      <div class="stat-box"><div class="stat-val g" id="sWins">0</div><div class="stat-lbl">WINS</div></div>
+      <div class="stat-box"><div class="stat-val r" id="sLoss">0</div><div class="stat-lbl">LOSS</div></div>
+      <div class="stat-box"><div class="stat-val" id="sTotal">0</div><div class="stat-lbl">TOTAL</div></div>
+    </div>
+
+    <div class="t-card">
+      <div class="t-label">LAST 10 RESULTS</div>
+      <div class="last10-row" id="last10"></div>
+      <div class="mini-bars" id="miniBars"></div>
+    </div>
+
+    <div class="t-card">
+      <div class="t-label">BIG vs SMALL</div>
+      <div class="bs-row">
+        <div class="bs-b" id="bsBig" style="flex:1">BIG</div>
+        <div class="bs-s" id="bsSml" style="flex:1">SML</div>
+      </div>
+      <div class="bs-lbl-row">
+        <span>BIG: <b id="bigCnt" style="color:var(--g)">0</b></span>
+        <span>SML: <b id="smlCnt" style="color:var(--red)">0</b></span>
+      </div>
+    </div>
+
+    <div class="pred-top">
+      <div>
+        <div class="period-lbl" id="periodLbl">> PERIOD: ---</div>
+        <div class="timer-big" id="timerDisp">00:30</div>
+      </div>
+      <div style="text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+        <div class="strat-pill" id="stratPill">> SCANNING...</div>
+        <div class="live-row"><div class="live-el" id="liveDot"></div><span id="liveTxt">CONNECTING</span></div>
+      </div>
+    </div>
+
+    <div class="prog-wrap"><div class="prog-fill" id="progFill" style="width:100%"></div></div>
+
+    <div class="pred-box">
+      <div class="pred-box-lbl">>> NEXT PREDICTION</div>
+      <div class="pred-val" id="predVal">--</div>
+      <div class="pred-nums-row" id="predNums">
+        <div class="num-chip">?</div>
+        <div class="num-chip">?</div>
+      </div>
+      <div class="conf-wrap">
+        <div class="conf-top">
+          <span class="conf-lbl">> SIGNAL CONFIDENCE</span>
+          <span class="conf-pct-val" id="confPct">--</span>
+        </div>
+        <div class="conf-bg"><div class="conf-fill" id="confFill" style="width:0%"></div></div>
+      </div>
+    </div>
+
+    <div class="t-label" style="margin-bottom:8px">STRATEGY ANALYSIS</div>
+    <div class="strat-row">
+      <div class="strat-c"><div class="strat-icon">🐉</div><div class="strat-name">DRAGON PULSE</div><div class="strat-val" id="dragonW">0W</div></div>
+      <div class="strat-c"><div class="strat-icon">🧠</div><div class="strat-name">NEURAL REVERSE</div><div class="strat-val" id="neuralW">0W</div></div>
+    </div>
+
+    <div class="t-card">
+      <div class="t-label">MARTINGALE</div>
+      <div class="mart-row" id="martRow">
+        <div class="mart-lv l1 a"><span class="mart-val">1X</span>LVL 1</div>
+        <div class="mart-lv l2"><span class="mart-val">3X</span>LVL 2</div>
+        <div class="mart-lv l3"><span class="mart-val">9X</span>LVL 3</div>
+        <div class="mart-lv l4"><span class="mart-val">27X</span>LVL 4</div>
+      </div>
+      <button class="btn-rst" onclick="resetMart()">[ RESET MARTINGALE ]</button>
+    </div>
+  </div>
+
+  <!-- HISTORY -->
+  <div id="tab-history" class="tab-content">
+    <div class="hist-filter">
+      <button class="hf-btn active" onclick="filterHist('ALL',this)">ALL</button>
+      <button class="hf-btn" onclick="filterHist('WIN',this)">[WIN]</button>
+      <button class="hf-btn" onclick="filterHist('LOSS',this)">[LOSS]</button>
+      <button class="hf-btn" onclick="filterHist('JACKPOT',this)">[JACKPOT]</button>
+    </div>
+    <div class="hist-wrap">
+      <table class="hist-table">
+        <thead><tr><th>PERIOD</th><th>PRED</th><th>RESULT</th><th>STATUS</th></tr></thead>
+        <tbody id="histBody"></tbody>
+      </table>
+    </div>
+    <div class="hist-btns">
+      <button class="btn-act btn-dl" onclick="downloadCSV()">[ CSV ]</button>
+      <button class="btn-act btn-clr" onclick="clearHistory()">[ CLEAR ]</button>
+    </div>
+  </div>
+
+  <!-- GAMES -->
+  <div id="tab-games" class="tab-content">
+    <div class="t-label" style="margin-bottom:12px">SELECT PLATFORM</div>
+    <div class="games-grid">
+      <a href="https://dkwin.xyz" target="_blank" class="game-card">
+        <div class="game-icon-wrap" style="background:rgba(59,130,246,.1)">🎮</div>
+        <div class="game-name">DKWIN</div>
+        <div class="game-url">dkwin.xyz</div>
+        <div class="game-cta">ACCESS →</div>
+      </a>
+      <a href="https://hgnice.xyz" target="_blank" class="game-card">
+        <div class="game-icon-wrap" style="background:rgba(34,197,94,.1)">🎯</div>
+        <div class="game-name">HGNICE</div>
+        <div class="game-url">hgnice.xyz</div>
+        <div class="game-cta">ACCESS →</div>
+      </a>
+      <a href="https://bdwin24.xyz" target="_blank" class="game-card">
+        <div class="game-icon-wrap" style="background:rgba(249,115,22,.1)">🏆</div>
+        <div class="game-name">BDWIN24</div>
+        <div class="game-url">bdwin24.xyz</div>
+        <div class="game-cta">ACCESS →</div>
+      </a>
+      <a href="https://24bdwin24.com/register?inviteCode=PRXRG3N&from=web" target="_blank" class="game-card">
+        <div class="game-icon-wrap" style="background:rgba(168,85,247,.1)">💎</div>
+        <div class="game-name">AMARCLUB</div>
+        <div class="game-url">amarclub.xyz</div>
+        <div class="game-cta">ACCESS →</div>
+      </a>
+    </div>
+  </div>
+
+  <!-- SUPPORT -->
+  <div id="tab-support" class="tab-content">
+    <div class="supp-hero">
+      <div class="supp-icon">⚡</div>
+      <div class="supp-title">AKASH MODZ</div>
+      <div class="supp-desc">সিগনাল, key কেনা বা যেকোনো সাহায্যের জন্য Telegram এ যোগাযোগ করুন।</div>
+      <a href="https://t.me/AKASH_VHAI444" target="_blank" class="btn-tg">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12s5.37 12 12 12 12-5.37 12-12S18.63 0 12 0zm5.94 8.19l-2.02 9.52c-.14.64-.53.8-1.07.5l-2.97-2.19-1.43 1.38c-.16.16-.29.29-.59.29l.21-3.01 5.46-4.93c.24-.21-.05-.33-.36-.12L7.24 14.04 4.3 13.12c-.64-.2-.65-.64.13-.95l11.63-4.48c.53-.2 1 .13.88.5z"/></svg>
+        @AKASH_VHAI444
+      </a>
+    </div>
+    <div class="sess-card">
+      <div class="t-label">SESSION INFO</div>
+      <div class="sess-row"><span class="sess-k">UID</span><span class="sess-v" id="uidDisp">---</span></div>
+      <div class="sess-row"><span class="sess-k">STATUS</span><span class="sess-v" id="statusDisp">---</span></div>
+      <div class="sess-row"><span class="sess-k">WINS</span><span class="sess-v" id="suppW">0</span></div>
+      <div class="sess-row"><span class="sess-k">LOSS</span><span class="sess-v r" id="suppL">0</span></div>
+      <button class="btn-logout" onclick="doLogout()">[ LOGOUT ]</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── MATRIX ──
+const canvas=document.getElementById('matrixCanvas');
+const ctx=canvas.getContext('2d');
+let drops=[];
+function initMatrix(){
+  canvas.width=window.innerWidth;canvas.height=window.innerHeight;
+  const cols=Math.floor(canvas.width/16);drops=Array(cols).fill(1);
+}
+function drawMatrix(){
+  ctx.fillStyle='rgba(0,0,0,0.05)';ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle='#00ff41';ctx.font='13px Fira Code';
+  drops.forEach((y,i)=>{
+    const ch=String.fromCharCode(0x30A0+Math.random()*96);
+    ctx.fillText(ch,i*16,y*16);
+    if(y*16>canvas.height&&Math.random()>.975)drops[i]=0;
+    drops[i]++;
+  });
+}
+initMatrix();setInterval(drawMatrix,55);window.addEventListener('resize',initMatrix);
+
+const API="https://draw.ar-lottery01.com/WinGo/WinGo_30S/GetHistoryIssuePage.json";
+
+// ── STATE ──
+let wins=0,loss=0,mart=1,logs=[],filt="ALL";
+let lastP=null,nextPred=null,tNums=[];
+let bigCnt=0,smlCnt=0,dragonW=0,neuralW=0,curStrat="";
+let syncIv=null,newLogs=0;
+
+// ── TOAST ──
+let toastTm;
+function toast(msg,type="info"){
+  const el=document.getElementById("toast");
+  el.textContent=msg;el.className="show "+type;
+  clearTimeout(toastTm);toastTm=setTimeout(()=>el.className="",2800);
+}
+
+// ── EYE ──
+function toggleEye(){
+  const inp=document.getElementById("keyInput");
+  inp.type=inp.type==="password"?"text":"password";
+}
+
+// ── LOGIN ──
+function doLogin(){
+  const raw=document.getElementById("keyInput").value.trim().toUpperCase();
+  const st=document.getElementById("loginStatus");
+  if(!raw){
+    st.className="login-status err";st.textContent="> ERROR: ENTER UID";
+    document.getElementById("keyInput").classList.add("shake");
+    setTimeout(()=>document.getElementById("keyInput").classList.remove("shake"),400);
+    return;
+  }
+  // UID-***** format check
+  const match=raw.match(/^UID-(\d+)$/);
+  if(!match){
+    st.className="login-status err";st.textContent="> ERROR: FORMAT = UID-00000";
+    document.getElementById("keyInput").classList.add("shake");
+    setTimeout(()=>document.getElementById("keyInput").classList.remove("shake"),400);
+    return;
+  }
+  st.className="login-status";st.textContent="> AUTHENTICATING...";
+  setTimeout(()=>{
+    st.className="login-status ok";st.textContent="> ACCESS GRANTED // WELCOME";
+    document.getElementById("uidDisp").textContent=raw;
+    document.getElementById("statusDisp").textContent="ACTIVE";
+    localStorage.setItem("hk_uid",raw);
+    setTimeout(activateApp,600);
+  },800);
+}
+
+function activateApp(){
+  showPage("pg-app");
+  startClock();syncEngine();
+  syncIv=setInterval(syncEngine,2000);
+  loadLocal();
+}
+
+function doLogout(){
+  if(!confirm("LOGOUT?"))return;
+  clearInterval(syncIv);
+  wins=0;loss=0;mart=1;logs=[];lastP=null;nextPred=null;
+  bigCnt=0;smlCnt=0;dragonW=0;neuralW=0;newLogs=0;
+  updateStats();renderHistory();
+  localStorage.removeItem("hk_uid");
+  showPage("pg-landing");
+  document.getElementById("keyInput").value="";
+  document.getElementById("loginStatus").textContent="";
+}
+
+// ── AUTO LOGIN ──
+function checkAuto(){
+  const uid=localStorage.getItem("hk_uid");
+  if(!uid)return;
+  document.getElementById("uidDisp").textContent=uid;
+  document.getElementById("statusDisp").textContent="ACTIVE";
+  activateApp();
+}
+
+// ── PAGE / TAB ──
+function showPage(id){
+  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+}
+function switchTab(id,btn){
+  document.querySelectorAll(".tab-content").forEach(t=>t.classList.remove("active"));
+  document.querySelectorAll(".nav-btn").forEach(b=>b.classList.remove("active"));
+  document.getElementById("tab-"+id).classList.add("active");
+  btn.classList.add("active");
+  if(id==="history"){newLogs=0;document.getElementById("histBadge").classList.remove("show");}
+}
+
+// ── CLOCK ──
+function startClock(){
+  setInterval(()=>{
+    const rem=30-new Date().getSeconds()%30;
+    const el=document.getElementById("timerDisp");
+    el.textContent="00:"+(rem<10?"0":"")+rem;
+    el.style.color=rem<=5?"var(--red)":"var(--g)";
+    el.style.textShadow=rem<=5?"0 0 20px var(--red)":"0 0 15px var(--g),0 0 30px rgba(0,255,65,.3)";
+    const pf=document.getElementById("progFill");
+    pf.style.width=((rem/30)*100)+"%";
+    pf.style.background=rem<=5?"linear-gradient(90deg,#660011,var(--red))":"linear-gradient(90deg,#004d00,var(--g))";
+  },1000);
+}
+
+// ── SYNC ──
+async function syncEngine(){
+  try{
+    const r=await fetch(API+"?t="+Date.now());
+    const d=await r.json();
+    setLive(true);
+    processData(d.data.list[0].issueNumber,parseInt(d.data.list[0].number),d.data.list);
+  }catch(e){setLive(false);}
+}
+function setLive(ok){
+  const dot=document.getElementById("liveDot");
+  const txt=document.getElementById("liveTxt");
+  if(dot)dot.className="live-el"+(ok?"":" off");
+  if(txt)txt.textContent=ok?"LIVE":"OFFLINE";
+}
+
+// ── PROCESS ──
+function processData(period,num,list){
+  const actual=num>=5?"BIG":"SMALL";
+  if(lastP===period)return;
+  if(nextPred&&lastP){
+    const win=(nextPred===actual)||tNums.includes(num);
+    const isJP=win&&tNums.includes(num)&&nextPred!==actual;
+    if(win){wins++;mart=1;curStrat==="DRAGON"?dragonW++:neuralW++;}
+    else{loss++;mart=Math.min(mart+1,4);}
+    if(actual==="BIG")bigCnt++;else smlCnt++;
+    updateStats();updateMart();updateBigSml();updateStrat();
+    const status=isJP?"JACKPOT🎰":win?"WIN":"LOSS";
+    const cls=isJP?"jp":win?"win":"loss";
+    toast(isJP?"🎰 JACKPOT!":win?"✔ WIN!":"✕ LOSS",win?"win":isJP?"jackpot":"loss");
+    logs.unshift({period:period.slice(-3),pred:nextPred,result:actual+"("+num+")",status,cls});
+    if(logs.length>100)logs.length=100;
+    renderHistory();updateSuppStats();updateLast10();updateMiniBars();saveLocal();
+    if(!document.getElementById("tab-history").classList.contains("active")){
+      newLogs++;document.getElementById("histBadge").classList.add("show");
+    }
+  }
+  lastP=period;
+  const last5=list.slice(0,5).map(x=>parseInt(x.number)>=5?"BIG":"SMALL");
+  const lastNums=list.slice(0,5).map(x=>parseInt(x.number));
+  const sum=lastNums.reduce((a,b)=>a+b,0);
+  if(last5[0]===last5[1]&&last5[1]===last5[2]){
+    nextPred=last5[0];curStrat="DRAGON";
+    document.getElementById("stratPill").textContent="> 🐉 DRAGON PULSE";
+  }else{
+    nextPred=last5[0]==="BIG"?"SMALL":"BIG";curStrat="NEURAL";
+    document.getElementById("stratPill").textContent="> 🧠 NEURAL REVERSE";
+  }
+  tNums=nextPred==="BIG"?(sum>20?[0,2]:[1,3]):(sum<25?[7,9]:[6,8]);
+  const diff=Math.abs(last5.filter(x=>x==="BIG").length-last5.filter(x=>x==="SMALL").length);
+  const conf=Math.min(95,50+diff*9);
+  document.getElementById("predVal").textContent=nextPred;
+  document.getElementById("predNums").innerHTML=tNums.map(n=>`<div class="num-chip">${n}</div>`).join("");
+  document.getElementById("confFill").style.width=conf+"%";
+  document.getElementById("confFill").style.background=
+    conf>=75?"linear-gradient(90deg,#004d00,var(--g))":
+    conf>=60?"linear-gradient(90deg,#554400,var(--yellow))":
+    "linear-gradient(90deg,#550011,var(--red))";
+  document.getElementById("confPct").textContent=conf+"%";
+  document.getElementById("periodLbl").textContent="> PERIOD: "+(BigInt(period)+1n).toString();
+}
+
+function updateStats(){
+  const total=wins+loss,rate=total>0?Math.round((wins/total)*100):0;
+  document.getElementById("sRate").textContent=rate+"%";
+  document.getElementById("sRate").style.color=rate>=50?"var(--g)":"var(--red)";
+  document.getElementById("sWins").textContent=wins;
+  document.getElementById("sLoss").textContent=loss;
+  document.getElementById("sTotal").textContent=total;
+}
+function updateSuppStats(){
+  document.getElementById("suppW").textContent=wins;
+  document.getElementById("suppL").textContent=loss;
+}
+function updateBigSml(){
+  const t=bigCnt+smlCnt||1;
+  document.getElementById("bsBig").style.flex=Math.max(1,(bigCnt/t)*10);
+  document.getElementById("bsSml").style.flex=Math.max(1,(smlCnt/t)*10);
+  document.getElementById("bigCnt").textContent=bigCnt;
+  document.getElementById("smlCnt").textContent=smlCnt;
+}
+function updateStrat(){
+  document.getElementById("dragonW").textContent=dragonW+"W";
+  document.getElementById("neuralW").textContent=neuralW+"W";
+}
+function updateLast10(){
+  document.getElementById("last10").innerHTML=
+    logs.slice(0,10).map(l=>`<div class="l10 ${l.cls==="win"?"w":l.cls==="jp"?"j":"l"}" title="${l.status}"></div>`).join("");
+}
+function updateMiniBars(){
+  document.getElementById("miniBars").innerHTML=
+    logs.slice(0,10).reverse().map(l=>{
+      const h=l.cls==="loss"?30:100;
+      const bg=l.cls==="jp"?"var(--yellow)":l.cls==="win"?"var(--g)":"var(--red)";
+      return `<div class="mini-bar" style="height:${h}%;flex:1;background:${bg};opacity:.7"></div>`;
+    }).join("");
+}
+function updateMart(){
+  document.querySelectorAll(".mart-lv").forEach((el,i)=>{
+    el.classList.toggle("a",i===mart-1);
+  });
+}
+function resetMart(){mart=1;updateMart();toast("> MARTINGALE RESET","info");}
+
+function filterHist(f,btn){
+  filt=f;
+  document.querySelectorAll(".hf-btn").forEach(b=>b.classList.remove("active"));
+  btn.classList.add("active");renderHistory();
+}
+function renderHistory(){
+  const filtered=logs.filter(l=>{
+    if(filt==="ALL")return true;
+    if(filt==="WIN")return l.cls==="win";
+    if(filt==="LOSS")return l.cls==="loss";
+    if(filt==="JACKPOT")return l.cls==="jp";
+    return true;
+  });
+  document.getElementById("histBody").innerHTML=filtered.length?
+    filtered.map((l,i)=>`<tr class="${i===0?"nr":""}">
+      <td>${l.period}</td><td>${l.pred}</td><td>${l.result}</td>
+      <td><span class="badge ${l.cls}">${l.status}</span></td></tr>`).join(""):
+    `<tr><td colspan="4" style="text-align:center;color:var(--sub);padding:24px;font-size:10px;letter-spacing:2px">> NO DATA</td></tr>`;
+}
+function saveLocal(){
+  try{localStorage.setItem("hk_hist",JSON.stringify({logs,wins,loss,bigCnt,smlCnt,dragonW,neuralW}));}catch(e){}
+}
+function loadLocal(){
+  try{
+    const raw=localStorage.getItem("hk_hist");
+    if(!raw)return;
+    const d=JSON.parse(raw);
+    logs=d.logs||[];wins=d.wins||0;loss=d.loss||0;
+    bigCnt=d.bigCnt||0;smlCnt=d.smlCnt||0;dragonW=d.dragonW||0;neuralW=d.neuralW||0;
+    updateStats();renderHistory();updateSuppStats();updateBigSml();updateStrat();updateLast10();updateMiniBars();
+  }catch(e){}
+}
+function clearHistory(){
+  if(!confirm("CLEAR ALL DATA?"))return;
+  logs=[];wins=0;loss=0;bigCnt=0;smlCnt=0;dragonW=0;neuralW=0;mart=1;
+  updateStats();renderHistory();updateSuppStats();updateBigSml();updateStrat();updateMart();updateLast10();updateMiniBars();
+  localStorage.removeItem("hk_hist");toast("> CLEARED","info");
+}
+function downloadCSV(){
+  if(!logs.length){toast("> NO DATA","loss");return;}
+  let csv="PERIOD,PRED,RESULT,STATUS\n";
+  logs.forEach(l=>csv+=`${l.period},${l.pred},${l.result},${l.status}\n`);
+  const a=document.createElement("a");
+  a.href="data:text/csv;charset=utf-8,"+encodeURIComponent(csv);
+  a.download="AKASH_MODZ_SIGNALS.csv";a.click();
+  toast("> CSV DOWNLOADED","info");
+}
+
+// ── BOOT ──
+window.onload=()=>{
+  checkAuto();
+  document.getElementById("keyInput").addEventListener("keydown",e=>{if(e.key==="Enter")doLogin();});
+};
+</script>
+</body>
+</html>
